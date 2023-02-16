@@ -1,6 +1,8 @@
 import time
 import numpy as np
 import pandas as pd
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
@@ -25,6 +27,12 @@ class ThresholdTree:
         threshold = mean[i] + sigma * np.sqrt(theta * R) + epsilon * np.sqrt(theta * R)
         left_centers = [c for c in centers if self.X[c, i] <= threshold]
         right_centers = [c for c in centers if self.X[c, i] > threshold]
+        print(f"Node centers: {centers}")
+        print(f"Mean: {mean}")
+        print(f"R: {R}")
+        print(f"Threshold: {threshold}")
+        print(f"Left centers: {left_centers}")
+        print(f"Right centers: {right_centers}")
         if len(left_centers) > 0 and len(right_centers) > 0:
             node.left_child = TreeNode(left_centers)
             node.right_child = TreeNode(right_centers)
@@ -69,6 +77,7 @@ def flatten_tree(node, Z, k, X):
         print(f"skipping node with centers {node.centers}")
         return k
 
+
 # Start the timer
 start_time = time.time()
 
@@ -76,8 +85,17 @@ start_time = time.time()
 iris = load_iris()
 X = iris.data
 
+# Compute the distance matrix
+D = pdist(X)
+# Compute the linkage matrix
+L = linkage(D)
+
+# Print the distance matrix and linkage matrix
+#print("Distance matrix:\n", D)
+#print("Linkage matrix:\n", L)
+
 # Initialize the centers as the first k samples in X
-k = 3
+k = 10
 C = np.arange(k)
 
 # construct the threshold tree
@@ -92,9 +110,10 @@ print("Time elapsed: ", end_time - start_time, "seconds")
 # generate the linkage matrix for the dendrogram
 Z = np.zeros((X.shape[0]-1, 4))
 flatten_tree(tree.root, Z, 0, X)
-print("Z:", Z)
-print("Z shape:", Z.shape)
-print("Z:", Z)
+
+#print("Z:", Z)
+#print("Z shape:", Z.shape)
+#print("Z:", Z)
 
 # plot the dendrogram
 plt.figure(figsize=(10, 5))
