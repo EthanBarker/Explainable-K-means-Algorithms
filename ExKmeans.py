@@ -50,16 +50,15 @@ class ThresholdTree:
             if len(centers) > 1:
                 theta = np.random.uniform(0, 1)
                 sigma = np.random.choice([-1, 1])
-                left_child, right_child = self.divide_and_share(node, 0, theta, sigma, epsilon)
-                if left_child is not None:
-                    print(f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
-                    queue.append(left_child)
-                if right_child is not None:
-                    print(
-                        f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
-                    queue.append(right_child)
+                for i in range(self.X.shape[1]):
+                    left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                    if left_child is not None:
+                        print(f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
+                        queue.append(left_child)
+                    if right_child is not None:
+                        print(f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
+                        queue.append(right_child)
         return self.root
-
 
 def flatten_tree(node, Z, k, X):
     if node.left_child is None and node.right_child is None:
@@ -77,7 +76,6 @@ def flatten_tree(node, Z, k, X):
         print(f"skipping node with centers {node.centers}")
         return k
 
-
 # Start the timer
 start_time = time.time()
 
@@ -88,7 +86,7 @@ X = iris.data
 # Compute the distance matrix
 D = pdist(X)
 # Compute the linkage matrix
-L = linkage(D)
+L = dendrogram(linkage(D), no_plot=True)
 
 # Print the distance matrix and linkage matrix
 #print("Distance matrix:\n", D)
@@ -99,7 +97,7 @@ k = 10
 C = np.arange(k)
 
 # construct the threshold tree
-delta = 0.1
+delta = 0
 tree = ThresholdTree(X, C, delta)
 tree.build()
 
