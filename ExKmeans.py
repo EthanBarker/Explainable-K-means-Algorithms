@@ -1,93 +1,78 @@
-import random
-import math
-import time
 import numpy as np
-from matplotlib import pyplot as plt
+import pandas as pd
+from scipy.cluster.hierarchy import dendrogram, linkage
+import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
-
-class Node:
-    def __init__(self, centers, coordinates=None, theta=None, sigma=None, epsilon=None, left=None, right=None):
+class TreeNode:
+    def __init__(self, centers):
         self.centers = centers
-        self.coordinates = coordinates
-        self.theta = theta
-        self.sigma = sigma
-        self.epsilon = epsilon
-        self.left = left
-        self.right = right
+        self.left_child = None
+        self.right_child = None
 
-def divide_and_share(node, coordinate, theta, sigma, epsilon):
-    centers = node.centers
-    if len(centers) == 1:
-        return node
+class ThresholdTree:
+    def __init__(self, X, C, delta):
+        self.X = X
+        self.C = C
+        self.delta = delta
+        self.root = TreeNode(C)
 
-    mean = np.mean(centers, axis=0)
-    distances = np.linalg.norm(centers - mean, axis=1)
-    R = max(distances)
-    t = random.uniform(0, R ** 2)
-    threshold = math.sqrt(t)
-    left_cut = (1 - epsilon) * threshold
-    right_cut = (1 + epsilon) * threshold
-    left_centers = []
-    right_centers = []
-    for center in centers:
-        if center[coordinate] < left_cut:
-            left_centers.append(center)
-        elif center[coordinate] > right_cut:
-            right_centers.append(center)
+    def divide_and_share(self, node, i, theta, sigma, epsilon):
+        centers = node.centers
+        mean = np.mean(self.X[centers], axis=0)
+        R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
+        threshold = mean[i] + sigma * np.sqrt(theta * R) + epsilon * np.sqrt(theta * R)
+        left_centers = [c for c in centers if self.X[c, i] <= threshold]
+        right_centers = [c for c in centers if self.X[c, i] > threshold]
+        if len(left_centers) > 0 and len(right_centers) > 0:
+            node.left_child = TreeNode(left_centers)
+            node.right_child = TreeNode(right_centers)
+            return node.left_child, node.right_child
         else:
-            left_centers.append(center)
-            right_centers.append(center)
-    left_node = Node(left_centers)
-    right_node = Node(right_centers)
-    return left_node, right_node
-def threshold_tree_construction(centers, delta):
-    k = len(centers)
-    tree = Node(centers)
-    stack = [tree]
-    counter = 0
-    max_counter = len(centers)
-    while stack and counter < max_counter:
-        node = stack.pop()
-        if len(node.centers) > 1:
-            coordinate = random.randint(0, len(centers[0]) - 1)
-            theta = random.choice([0, 1])
-            sigma = random.choice([-1, 1])
-            epsilon = min(delta / (15 * np.log(k)), 1 / 384)
-            left_node, right_node = divide_and_share(node, coordinate, theta, sigma, epsilon)
-            node.left = left_node
-            node.right = right_node
-            stack.append(node.left)
-            stack.append(node.right)
-            counter += 1
-    return tree
+            return None, None
 
-def plot_tree(tree):
-    print(tree.centers)
-    if tree is None:
-        return
-    if tree.left is None and tree.right is None:
-        plt.scatter(tree.centers[:, 0], tree.centers[:, 1], marker='o', color='red')
-    else:
-        plt.scatter(tree.centers[:, 0], tree.centers[:, 1], marker='o', color='blue')
-        plot_tree(tree.left)
-        plot_tree(tree.right)
+    def build(self):
+        k = len(self.C)
+        epsilon = min(self.delta / (15 * np.log(k)), 1/384)
+        queue = [self.root]
+        while queue:
+            node = queue.pop(0)
+            centers = node.centers
+            if len(centers) > 1:
+                theta = np.random.uniform(0, 1)
+                sigma = np.random.choice([-1, 1])
+                left_child, right_child = self.divide_and_share(node, 0, theta, sigma, epsilon)
+                if left_child is not None:
+                    queue.append(left_child)
+                if right_child is not None:
+                    queue.append(right_child)
+        return self.root
 
-# Start the timer
-start_time = time.time()
+def flatten_tree(node, Z, k):
+    if node.left_child is None and node.right_child is None:
+        return k
+    k = flatten_tree(node.left_child, Z, k)
+    k = flatten_tree(node.right_child, Z, k)
+    Z[k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
+    Z[k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
+    Z[k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
+    return k + 1
 
 # load the iris dataset
-iris = load_iris()
-centers = np.array(iris.data)
+iris = pd.read_csv("iris.csv")
+X = iris.iloc[:, :-1].values
+C = list(range(X.shape[0]))
 
-# build the threshold tree
-delta = 1
-ExKmeans = threshold_tree_construction(centers, delta)
+# construct the threshold tree
+delta = 0.1
+tree = ThresholdTree(X, C, delta)
+tree.build()
 
-print(ExKmeans)
-plot_tree(ExKmeans)
-#plt.show()
+# generate the linkage matrix for the dendrogram
+Z = np.zeros((X.shape[0]-1, 4))
+flatten_tree(tree.root, Z, 0)
 
-# End timer and then display time taken to run in terminal
-end_time = time.time()
-print("Time elapsed: ", end_time - start_time, "seconds")
+# plot the dendrogram
+plt.figure(figsize=(10, 5))
+dendrogram(Z)
+plt.show()
