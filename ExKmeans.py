@@ -24,21 +24,26 @@ class ThresholdTree:
         centers = node.centers
         mean = np.mean(self.X[centers], axis=0)
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
-        threshold = mean[i] + sigma * np.sqrt(theta * R) + epsilon * np.sqrt(theta * R)
+        t = np.random.choice([0, R])
+        threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         left_centers = [c for c in centers if self.X[c, i] <= threshold]
         right_centers = [c for c in centers if self.X[c, i] > threshold]
+        print("--------------------")
         print(f"Node centers: {centers}")
         print(f"Mean: {mean}")
         print(f"R: {R}")
         print(f"Threshold: {threshold}")
         print(f"Left centers: {left_centers}")
         print(f"Right centers: {right_centers}")
+        print("--------------------")
         if len(left_centers) > 0 and len(right_centers) > 0:
             node.left_child = TreeNode(left_centers)
             node.right_child = TreeNode(right_centers)
-            return node.left_child, node.right_child
-        else:
-            return None, None
+        elif len(left_centers) > 0:
+            node.left_child = TreeNode(left_centers)
+        elif len(right_centers) > 0:
+            node.right_child = TreeNode(right_centers)
+        return node.left_child, node.right_child
 
     def build(self):
         k = len(self.C)
@@ -93,7 +98,7 @@ L = dendrogram(linkage(D), no_plot=True)
 #print("Linkage matrix:\n", L)
 
 # Initialize the centers as the first k samples in X
-k = 10
+k = 5
 C = np.arange(k)
 
 # construct the threshold tree
