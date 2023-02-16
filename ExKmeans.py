@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram, linkage
@@ -33,7 +34,7 @@ class ThresholdTree:
 
     def build(self):
         k = len(self.C)
-        epsilon = min(self.delta / (15 * np.log(k)), 1/384)
+        epsilon = min(self.delta / (15 * np.log(k)), 1 / 384)
         queue = [self.root]
         while queue:
             node = queue.pop(0)
@@ -43,34 +44,57 @@ class ThresholdTree:
                 sigma = np.random.choice([-1, 1])
                 left_child, right_child = self.divide_and_share(node, 0, theta, sigma, epsilon)
                 if left_child is not None:
+                    print(f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
                     queue.append(left_child)
                 if right_child is not None:
+                    print(
+                        f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
                     queue.append(right_child)
         return self.root
 
-def flatten_tree(node, Z, k):
+
+def flatten_tree(node, Z, k, X):
     if node.left_child is None and node.right_child is None:
+        print(f"leaf node with centers {node.centers}")
         return k
-    k = flatten_tree(node.left_child, Z, k)
-    k = flatten_tree(node.right_child, Z, k)
-    Z[k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
-    Z[k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
-    Z[k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
-    return k + 1
+    k = flatten_tree(node.left_child, Z, k, X)
+    k = flatten_tree(node.right_child, Z, k, X)
+    if node.left_child is not None and node.right_child is not None:
+        print(f"adding node with centers {node.centers} to linkage matrix at index {k}")
+        Z[k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
+        Z[k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
+        Z[k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
+        return k + 1
+    else:
+        print(f"skipping node with centers {node.centers}")
+        return k
+
+# Start the timer
+start_time = time.time()
 
 # load the iris dataset
-iris = pd.read_csv("iris.csv")
-X = iris.iloc[:, :-1].values
-C = list(range(X.shape[0]))
+iris = load_iris()
+X = iris.data
+
+# Initialize the centers as the first k samples in X
+k = 3
+C = np.arange(k)
 
 # construct the threshold tree
 delta = 0.1
 tree = ThresholdTree(X, C, delta)
 tree.build()
 
+# End timer and then display time taken to run in terminal
+end_time = time.time()
+print("Time elapsed: ", end_time - start_time, "seconds")
+
 # generate the linkage matrix for the dendrogram
 Z = np.zeros((X.shape[0]-1, 4))
-flatten_tree(tree.root, Z, 0)
+flatten_tree(tree.root, Z, 0, X)
+print("Z:", Z)
+print("Z shape:", Z.shape)
+print("Z:", Z)
 
 # plot the dendrogram
 plt.figure(figsize=(10, 5))
