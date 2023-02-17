@@ -74,6 +74,29 @@ class ThresholdTree:
                                 right_child is not None and len(right_child.centers) == 1):
                             print(
                                 f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
+                            # Print the root node, its children, and their children
+                            print("--------------------")
+                            print("Root node:")
+                            print(f"Centers: {self.root.centers}")
+                            if self.root.left_child is not None:
+                                print("Left child:")
+                                print(f"Centers: {self.root.left_child.centers}")
+                                if self.root.left_child.left_child is not None:
+                                    print("Left grandchild:")
+                                    print(f"Centers: {self.root.left_child.left_child.centers}")
+                                if self.root.left_child.right_child is not None:
+                                    print("Right grandchild:")
+                                    print(f"Centers: {self.root.left_child.right_child.centers}")
+                            if self.root.right_child is not None:
+                                print("Right child:")
+                                print(f"Centers: {self.root.right_child.centers}")
+                                if self.root.right_child.left_child is not None:
+                                    print("Left grandchild:")
+                                    print(f"Centers: {self.root.right_child.left_child.centers}")
+                                if self.root.right_child.right_child is not None:
+                                    print("Right grandchild:")
+                                    print(f"Centers: {self.root.right_child.right_child.centers}")
+                            print("--------------------")
                             return self.root
         return self.root
 
@@ -131,25 +154,16 @@ root = tree.build()
 Z = np.zeros((2 * len(C) - 1, 4))
 flatten_tree(root, Z, k, X)
 
+print(Z)
+
 # Plot the dendrogram
-plt.figure(figsize=(10, 5))
-dendrogram(Z, color_threshold=0.7*np.max(Z[:,2]))
-plt.xlabel("Samples")
-plt.ylabel("Distance")
-plt.title("Dendrogram")
-plt.show()
+#plt.figure(figsize=(10, 5))
+#dendrogram(Z, color_threshold=0.7*np.max(Z[:,2]))
+#plt.xlabel("Samples")
+#plt.ylabel("Distance")
+#plt.title("Dendrogram")
+#plt.show()
 
-# Assign clusters to the data
-max_d = 0.7*np.max(Z[:,2])
-clusters = fcluster(Z, t=max_d, criterion='distance')
-
-# Visualize the clusters on a scatter plot
-plt.figure(figsize=(10, 5))
-plt.scatter(X[:, 0], X[:, 1], c=clusters, cmap='rainbow')
-plt.xlabel("Sepal Length")
-plt.ylabel("Sepal Width")
-plt.title("Cluster Visualization")
-plt.show()
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
