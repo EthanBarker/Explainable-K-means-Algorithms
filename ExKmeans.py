@@ -65,12 +65,13 @@ class ThresholdTree:
                         print(
                             f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
                         queue.append(right_child)
-                    if (left_child is not None and len(left_child.centers) == 1) or (
+                    if (left_child is not None and len(left_child.centers) == 1) and (
                             right_child is not None and len(right_child.centers) == 1):
                         print(
-                            f"Stopping the algorithm because a node has only one center: {left_child.centers if left_child else right_child.centers}")
+                            f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
                         return self.root
         return self.root
+
 
 def flatten_tree(node, Z, k, X):
     if node.left_child is None and node.right_child is None:
@@ -126,6 +127,6 @@ flatten_tree(tree.root, Z, 0, X)
 #print("Z:", Z)
 
 # plot the dendrogram
-#plt.figure(figsize=(10, 5))
-#dendrogram(Z)
-#plt.show()
+plt.figure(figsize=(10, 5))
+dendrogram(Z)
+plt.show()
