@@ -23,7 +23,8 @@ class ThresholdTree:
     def divide_and_share(self, node, i, theta, sigma, epsilon):
         centers = node.centers
         mean = np.mean(self.X[centers], axis=0)
-        R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
+        distances = np.linalg.norm(self.X[centers] - mean, axis=1)
+        R = np.max(distances)
         t = np.random.choice([0, R])
         threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         left_centers = [c for c in centers if self.X[c, i] <= threshold]
@@ -43,7 +44,13 @@ class ThresholdTree:
             node.left_child = TreeNode(left_centers)
         elif len(right_centers) > 0:
             node.right_child = TreeNode(right_centers)
-        return node.left_child, node.right_child
+        else:
+            # if left and right nodes are empty, this is a leaf node with a single center
+            return None, None
+        if len(left_centers) > 1 and len(right_centers) > 1:
+            return node.left_child, node.right_child
+        else:
+            return None, None
 
     def build(self):
         k = len(self.C)
@@ -52,18 +59,30 @@ class ThresholdTree:
         while queue:
             node = queue.pop(0)
             centers = node.centers
-            if len(centers) > 1:
+            if len(centers) > 1:  # Add this if statement
                 theta = np.random.uniform(0, 1)
                 sigma = np.random.choice([-1, 1])
                 for i in range(self.X.shape[1]):
                     left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
                     if left_child is not None:
-                        print(f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
+                        print(
+                            f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
                         queue.append(left_child)
                     if right_child is not None:
-                        print(f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
+                        print(
+                            f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
                         queue.append(right_child)
+            else:  # add this else block
+                # if left and right nodes are empty, this is a leaf node with a single center
+                parent_node = queue[0]  # get parent node from the queue
+                if parent_node.left_child is not None and parent_node.right_child is None:
+                    parent_node.right_child = node
+                elif parent_node.left_child is None and parent_node.right_child is not None:
+                    parent_node.left_child = node
+                else:  # if this is the root node
+                    return node  # return the root node as a leaf node
         return self.root
+
 
 def flatten_tree(node, Z, k, X):
     if node.left_child is None and node.right_child is None:
@@ -86,7 +105,7 @@ start_time = time.time()
 
 # load the iris dataset
 iris = load_iris()
-X = iris.data
+X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 
 # Compute the distance matrix
 D = pdist(X)
@@ -98,7 +117,7 @@ L = dendrogram(linkage(D), no_plot=True)
 #print("Linkage matrix:\n", L)
 
 # Initialize the centers as the first k samples in X
-k = 5
+k = 3
 C = np.arange(k)
 
 # construct the threshold tree
@@ -119,6 +138,6 @@ flatten_tree(tree.root, Z, 0, X)
 #print("Z:", Z)
 
 # plot the dendrogram
-plt.figure(figsize=(10, 5))
-dendrogram(Z)
-plt.show()
+#plt.figure(figsize=(10, 5))
+#dendrogram(Z)
+#plt.show()
