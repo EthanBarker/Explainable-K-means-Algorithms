@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
@@ -103,14 +103,20 @@ X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 # Compute the distance matrix
 D = pdist(X)
 
+# Convert D to square distance matrix
+D_square = squareform(D)
+
+# Remove duplicates
+unique_rows = np.unique(D_square, axis=0)
+
+# Convert the square distance matrix back to condensed distance matrix
+D = pdist(unique_rows)
+
 # check for duplicate rows
 if len(X) != len(np.unique(X, axis=0)):
     print("Duplicate rows found!")
 else:
     print("There are no duplicate rows in the matrix")
-
-# Compute the linkage matrix
-Z = linkage(D)
 
 # Initialize the centers as the first k samples in X
 k = 3
