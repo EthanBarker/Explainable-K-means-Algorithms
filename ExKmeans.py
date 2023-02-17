@@ -19,6 +19,7 @@ class ThresholdTree:
         self.C = C
         self.delta = delta
         self.root = TreeNode(C)
+        self.processed_nodes = set()
 
     def divide_and_share(self, node, i, theta, sigma, epsilon):
         centers = node.centers
@@ -52,24 +53,26 @@ class ThresholdTree:
         while queue:
             node = queue.pop(0)
             centers = node.centers
-            if len(centers) > 1:
-                theta = np.random.uniform(0, 1)
-                sigma = np.random.choice([-1, 1])
-                for i in range(self.X.shape[1]):
-                    left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
-                    if left_child is not None:
-                        print(
-                            f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
-                        queue.append(left_child)
-                    if right_child is not None:
-                        print(
-                            f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
-                        queue.append(right_child)
-                    if (left_child is not None and len(left_child.centers) == 1) and (
-                            right_child is not None and len(right_child.centers) == 1):
-                        print(
-                            f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
-                        return self.root
+            if node not in self.processed_nodes:
+                self.processed_nodes.add(node)
+                if len(centers) > 1:
+                    theta = np.random.uniform(0, 1)
+                    sigma = np.random.choice([-1, 1])
+                    for i in range(self.X.shape[1]):
+                        left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                        if left_child is not None and left_child not in self.processed_nodes:
+                            queue.append(left_child)
+                            print(
+                                f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
+                        if right_child is not None and right_child not in self.processed_nodes:
+                            queue.append(right_child)
+                            print(
+                                f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
+                        if (left_child is not None and len(left_child.centers) == 1) and (
+                                right_child is not None and len(right_child.centers) == 1):
+                            print(
+                                f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
+                            return self.root
         return self.root
 
 
@@ -127,6 +130,6 @@ flatten_tree(tree.root, Z, 0, X)
 #print("Z:", Z)
 
 # plot the dendrogram
-plt.figure(figsize=(10, 5))
-dendrogram(Z)
-plt.show()
+#plt.figure(figsize=(10, 5))
+#dendrogram(Z)
+#plt.show()
