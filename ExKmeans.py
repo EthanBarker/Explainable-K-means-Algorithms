@@ -58,11 +58,18 @@ class ThresholdTree:
                 for i in range(self.X.shape[1]):
                     left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
                     if left_child is not None:
-                        print(f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
+                        print(
+                            f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
                         queue.append(left_child)
                     if right_child is not None:
-                        print(f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
+                        print(
+                            f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
                         queue.append(right_child)
+                    if (left_child is not None and len(left_child.centers) == 1) or (
+                            right_child is not None and len(right_child.centers) == 1):
+                        print(
+                            f"Stopping the algorithm because a node has only one center: {left_child.centers if left_child else right_child.centers}")
+                        return self.root
         return self.root
 
 def flatten_tree(node, Z, k, X):
