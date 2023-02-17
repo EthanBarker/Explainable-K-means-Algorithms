@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist
-from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
@@ -34,8 +34,10 @@ class ThresholdTree:
         print(f"Mean: {mean}")
         print(f"R: {R}")
         print(f"Threshold: {threshold}")
-        print(f"Left centers: {left_centers}")
-        print(f"Right centers: {right_centers}")
+        if len(left_centers) > 0:
+            print(f"Left centers: {left_centers}")
+        if len(right_centers) > 0:
+            print(f"Right centers: {right_centers}")
         print("--------------------")
         if len(left_centers) > 0 and len(right_centers) > 0:
             node.left_child = TreeNode(left_centers)
@@ -75,22 +77,21 @@ class ThresholdTree:
                             return self.root
         return self.root
 
-
 def flatten_tree(node, Z, k, X):
     if node.left_child is None and node.right_child is None:
         print(f"leaf node with centers {node.centers}")
         return k
-    k = flatten_tree(node.left_child, Z, k, X)
-    k = flatten_tree(node.right_child, Z, k, X)
+    left_k = flatten_tree(node.left_child, Z, k, X)
+    right_k = flatten_tree(node.right_child, Z, left_k, X)
     if node.left_child is not None and node.right_child is not None:
-        print(f"adding node with centers {node.centers} to linkage matrix at index {k}")
-        Z[k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
-        Z[k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
-        Z[k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
-        return k + 1
+        print(f"adding node with centers {node.centers} to linkage matrix at index {right_k}")
+        Z[right_k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
+        Z[right_k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
+        Z[right_k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
+        return right_k + 1
     else:
         print(f"skipping node with centers {node.centers}")
-        return k
+        return right_k
 
 # Start the timer
 start_time = time.time()
@@ -101,12 +102,15 @@ X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 
 # Compute the distance matrix
 D = pdist(X)
-# Compute the linkage matrix
-L = dendrogram(linkage(D), no_plot=True)
 
-# Print the distance matrix and linkage matrix
-#print("Distance matrix:\n", D)
-#print("Linkage matrix:\n", L)
+# check for duplicate rows
+if len(X) != len(np.unique(X, axis=0)):
+    print("Duplicate rows found!")
+else:
+    print("There are no duplicate rows in the matrix")
+
+# Compute the linkage matrix
+Z = linkage(D)
 
 # Initialize the centers as the first k samples in X
 k = 3
@@ -115,21 +119,32 @@ C = np.arange(k)
 # construct the threshold tree
 delta = 0
 tree = ThresholdTree(X, C, delta)
-tree.build()
+root = tree.build()
+
+# Flatten the tree to get the linkage matrix
+Z = np.zeros((2 * len(C) - 1, 4))
+flatten_tree(root, Z, k, X)
+
+# Plot the dendrogram
+plt.figure(figsize=(10, 5))
+dendrogram(Z, color_threshold=0.7*np.max(Z[:,2]))
+plt.xlabel("Samples")
+plt.ylabel("Distance")
+plt.title("Dendrogram")
+plt.show()
+
+# Assign clusters to the data
+max_d = 0.7*np.max(Z[:,2])
+clusters = fcluster(Z, t=max_d, criterion='distance')
+
+# Visualize the clusters on a scatter plot
+plt.figure(figsize=(10, 5))
+plt.scatter(X[:, 0], X[:, 1], c=clusters, cmap='rainbow')
+plt.xlabel("Sepal Length")
+plt.ylabel("Sepal Width")
+plt.title("Cluster Visualization")
+plt.show()
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
-print("Time elapsed: ", end_time - start_time, "seconds")
-
-# generate the linkage matrix for the dendrogram
-Z = np.zeros((X.shape[0]-1, 4))
-flatten_tree(tree.root, Z, 0, X)
-
-#print("Z:", Z)
-#print("Z shape:", Z.shape)
-#print("Z:", Z)
-
-# plot the dendrogram
-#plt.figure(figsize=(10, 5))
-#dendrogram(Z)
-#plt.show()
+print("Time elapsed: ", end_time - start_time)
