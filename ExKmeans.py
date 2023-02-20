@@ -2,6 +2,7 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.datasets import load_iris
+import scipy.cluster.hierarchy as shc
 
 class TreeNode:
     def __init__(self, centers):
@@ -92,35 +93,6 @@ def visualize_ASCII_tree(node, depth=0):
     visualize_ASCII_tree(node.left_child, depth + 2)
     visualize_ASCII_tree(node.right_child, depth + 2)
 
-def visualize_tree(node, X):
-    if node is None:
-        return
-    centers = node.centers
-    left_child = node.left_child
-    right_child = node.right_child
-
-    if left_child is None and right_child is None:
-        # Leaf node - plot centers and return
-        plt.scatter(X[centers, 0], X[centers, 1], color='blue')
-        return
-
-    # Non-leaf node - plot centers and decision boundary
-    plt.scatter(X[centers, 0], X[centers, 1], color='blue')
-
-    # Plot vertical line for decision boundary
-    x = X[centers, 0]
-    i = np.random.choice(range(X.shape[1]))
-    mean = np.mean(X[centers], axis=0)
-    R = np.max([np.linalg.norm(X[centers[j]] - mean) ** 2 for j in range(len(centers))])
-    t = np.random.choice([0, R])
-    sigma = np.random.choice([-1, 1])
-    epsilon = 1 / 384
-    threshold = mean[i] - sigma * np.sqrt(t / len(centers)) + epsilon * np.sqrt(R)
-    plt.plot([threshold, threshold], [np.min(X[:, 1]), np.max(X[:, 1])], linestyle='--', color='black')
-
-    # Recursively plot left and right subtrees
-    visualize_tree(left_child, X)
-    visualize_tree(right_child, X)
 
 # Start the timer
 start_time = time.time()
@@ -138,10 +110,11 @@ delta = 0
 tree = ThresholdTree(X, C, delta)
 root = tree.build()
 
-# visualize the tree
-visualize_ASCII_tree(root)
-plt.figure(figsize=(8, 6))
-visualize_tree(root, X)
+# plot dendrogram
+plt.figure(figsize=(10, 7))
+plt.title("Threshold Tree Dendrogram")
+dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
+
 plt.show()
 
 # End timer and then display time taken to run in terminal
