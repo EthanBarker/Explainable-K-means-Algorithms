@@ -76,7 +76,7 @@ class ThresholdTree:
                         if (left_child is not None and len(left_child.centers) == 1) and (
                                 right_child is not None and len(right_child.centers) == 1):
                             print(
-                                f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
+                                f"Stopping the algorithm because all nodes have only one center")
                             self.processed_nodes.add(left_child)
                             self.processed_nodes.add(right_child)
                             break
@@ -92,7 +92,7 @@ iris = load_iris()
 X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 
 # Initialize the centers as the first k samples in X
-k = 5
+k = 3
 C = np.arange(k)
 
 # construct the threshold tree
