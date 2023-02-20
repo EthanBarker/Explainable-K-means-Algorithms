@@ -1,10 +1,5 @@
 import time
 import numpy as np
-import pandas as pd
-from scipy.spatial.distance import pdist, squareform
-from scipy.cluster.hierarchy import linkage, fcluster
-from scipy.cluster.hierarchy import dendrogram, linkage
-import matplotlib.pyplot as plt
 from sklearn.datasets import load_iris
 
 class TreeNode:
@@ -51,9 +46,9 @@ class ThresholdTree:
     def build(self):
         k = len(self.C)
         epsilon = min(self.delta / (15 * np.log(k)), 1 / 384)
-        queue = [self.root]
+        queue = [(self.root, 0)]
         while queue:
-            node = queue.pop(0)
+            node, depth = queue.pop(0)
             centers = node.centers
             if node not in self.processed_nodes:
                 self.processed_nodes.add(node)
@@ -63,51 +58,23 @@ class ThresholdTree:
                     for i in range(self.X.shape[1]):
                         left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
                         if left_child is not None and left_child not in self.processed_nodes:
-                            queue.append(left_child)
-                            print(
-                                f"Adding node with centers {left_child.centers} as left child of node with centers {centers}")
+                            queue.append((left_child, depth + 1))
                         if right_child is not None and right_child not in self.processed_nodes:
-                            queue.append(right_child)
-                            print(
-                                f"Adding node with centers {right_child.centers} as right child of node with centers {centers}")
-                        if (left_child is not None and len(left_child.centers) == 1) and (
-                                right_child is not None and len(right_child.centers) == 1):
-                            print(
-                                f"Stopping the algorithm because both nodes have only one center: {left_child.centers} and {right_child.centers}")
-                            # Print the root node, its children, and their children
-                            print("--------------------")
-                            print("Root node:")
-                            print(f"Centers: {self.root.centers}")
-                            if self.root.left_child is not None:
-                                print("Left child:")
-                                print(f"Centers: {self.root.left_child.centers}")
-                                if self.root.left_child.left_child is not None:
-                                    print("Left grandchild:")
-                                    print(f"Centers: {self.root.left_child.left_child.centers}")
-                                if self.root.left_child.right_child is not None:
-                                    print("Right grandchild:")
-                                    print(f"Centers: {self.root.left_child.right_child.centers}")
-                            if self.root.right_child is not None:
-                                print("Right child:")
-                                print(f"Centers: {self.root.right_child.centers}")
-                                if self.root.right_child.left_child is not None:
-                                    print("Left grandchild:")
-                                    print(f"Centers: {self.root.right_child.left_child.centers}")
-                                if self.root.right_child.right_child is not None:
-                                    print("Right grandchild:")
-                                    print(f"Centers: {self.root.right_child.right_child.centers}")
-                            print("--------------------")
-                            return self.root
+                            queue.append((right_child, depth + 1))
+                # Print the node information
+                print(f"{'-' * depth}{centers}")
         return self.root
 
-def flatten_tree(node, Z, k, X):
+def flatten_tree(node, Z, k, X, depth=0):
     if node.left_child is None and node.right_child is None:
-        print(f"leaf node with centers {node.centers}")
+        # Print the leaf node information
+        print(f"{'-' * depth}{node.centers}")
         return k
-    left_k = flatten_tree(node.left_child, Z, k, X)
-    right_k = flatten_tree(node.right_child, Z, left_k, X)
+    left_k = flatten_tree(node.left_child, Z, k, X, depth + 1)
+    right_k = flatten_tree(node.right_child, Z, left_k, X, depth + 1)
     if node.left_child is not None and node.right_child is not None:
-        print(f"adding node with centers {node.centers} to linkage matrix at index {right_k}")
+        # Print the non-leaf node information
+        print(f"{'-' * depth}{node.centers} -> {node.left_child.centers}, {node.right_child.centers}")
         Z[right_k, :2] = [node.left_child.centers[0], node.right_child.centers[0]]
         Z[right_k, 2] = np.linalg.norm(X[node.left_child.centers[0]] - X[node.right_child.centers[0]])
         Z[right_k, 3] = len(node.left_child.centers) + len(node.right_child.centers)
@@ -119,27 +86,9 @@ def flatten_tree(node, Z, k, X):
 # Start the timer
 start_time = time.time()
 
-# load the iris dataset
+# Load the iris dataset
 iris = load_iris()
-X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
-
-# Compute the distance matrix
-D = pdist(X)
-
-# Convert D to square distance matrix
-D_square = squareform(D)
-
-# Remove duplicates
-unique_rows = np.unique(D_square, axis=0)
-
-# Convert the square distance matrix back to condensed distance matrix
-D = pdist(unique_rows)
-
-# check for duplicate rows
-if len(X) != len(np.unique(X, axis=0)):
-    print("Duplicate rows found!")
-else:
-    print("There are no duplicate rows in the matrix")
+X = iris.data[:, :2] # Use only the first 2 columns
 
 # Initialize the centers as the first k samples in X
 k = 3
@@ -147,23 +96,13 @@ C = np.arange(k)
 
 # construct the threshold tree
 delta = 0
+# Build the threshold tree
 tree = ThresholdTree(X, C, delta)
 root = tree.build()
 
-# Flatten the tree to get the linkage matrix
-Z = np.zeros((2 * len(C) - 1, 4))
-flatten_tree(root, Z, k, X)
-
-print(Z)
-
-# Plot the dendrogram
-#plt.figure(figsize=(10, 5))
-#dendrogram(Z, color_threshold=0.7*np.max(Z[:,2]))
-#plt.xlabel("Samples")
-#plt.ylabel("Distance")
-#plt.title("Dendrogram")
-#plt.show()
-
+# Stop the timer and print the elapsed time
+end_time = time.time()
+print(f"Elapsed time: {end_time - start_time} seconds")
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
