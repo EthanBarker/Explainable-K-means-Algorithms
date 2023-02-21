@@ -10,6 +10,7 @@ class TreeNode:
         self.left_child = None
         self.right_child = None
         self.is_split = False
+        self.threshold = None  # initialize threshold to None
 
 class ThresholdTree:
     def __init__(self, X, C, delta):
@@ -34,6 +35,7 @@ class ThresholdTree:
         print(f"Mean: {mean}")
         print(f"R: {R}")
         print(f"Threshold: {threshold}")
+        node.threshold = threshold  # set threshold attribute
         if len(left_centers) > 0:
             print(f"Left centers: {left_centers}")
         if len(right_centers) > 0:
@@ -93,6 +95,17 @@ def visualize_ASCII_tree(node, depth=0):
     visualize_ASCII_tree(node.left_child, depth + 2)
     visualize_ASCII_tree(node.right_child, depth + 2)
 
+def plot_clusters(node, X):
+    if node is None:
+        return
+    if node.left_child is None and node.right_child is None:
+        plt.scatter(X[node.centers, 0], X[node.centers, 1], s=50)
+    else:
+        plot_clusters(node.left_child, X)
+        plot_clusters(node.right_child, X)
+        if node.is_split:
+            plt.axvline(x=node.threshold, color='k', linestyle='--', linewidth=1)
+
 
 # Start the timer
 start_time = time.time()
@@ -111,11 +124,13 @@ tree = ThresholdTree(X, C, delta)
 root = tree.build()
 
 # plot dendrogram
-plt.figure(figsize=(10, 7))
-plt.title("Threshold Tree Dendrogram")
-dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
+#plt.figure(figsize=(10, 7))
+#plt.title("Threshold Tree Dendrogram")
+#dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
 
+plot_clusters(root, X)
 plt.show()
+
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
