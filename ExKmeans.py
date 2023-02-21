@@ -46,14 +46,19 @@ class ThresholdTree:
             node.right_child = TreeNode(right_centers)
             node.is_split = True
             self.processed_nodes.add(node)
-        elif len(left_centers) > 0:
-            node.left_child = TreeNode(left_centers)
-            node.is_split = True
-            self.processed_nodes.add(node)
-        elif len(right_centers) > 0:
-            node.right_child = TreeNode(right_centers)
-            node.is_split = True
-            self.processed_nodes.add(node)
+        else:
+            # If one of the child nodes is empty, try again until it can be split into two non-empty children
+            while True:
+                theta = np.random.uniform(0, 1)
+                sigma = np.random.choice([-1, 1])
+                i = np.random.randint(self.X.shape[1])
+                left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                if left_child is not None and right_child is not None:
+                    node.left_child = left_child
+                    node.right_child = right_child
+                    node.is_split = True
+                    self.processed_nodes.add(node)
+                    break
         return node.left_child, node.right_child
 
     def build(self):
