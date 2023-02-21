@@ -98,14 +98,11 @@ def visualize_ASCII_tree(node, depth=0):
 def plot_clusters(node, X):
     if node is None:
         return
-    if node.left_child is None and node.right_child is None:
-        plt.scatter(X[node.centers, 0], X[node.centers, 1], s=50)
     else:
         plot_clusters(node.left_child, X)
         plot_clusters(node.right_child, X)
         if node.is_split:
             plt.axvline(x=node.threshold, color='k', linestyle='--', linewidth=1)
-
 
 # Start the timer
 start_time = time.time()
@@ -113,6 +110,8 @@ start_time = time.time()
 # load the iris dataset
 iris = load_iris()
 X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
+y = iris.target
+
 
 # Initialize the centers as the first k samples in X
 k = 3
@@ -128,6 +127,10 @@ root = tree.build()
 #plt.title("Threshold Tree Dendrogram")
 #dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
 
+plt.scatter(X[:, 0], X[:, 1], c=y)
+plt.xlabel('Sepal length (cm)')
+plt.ylabel('Sepal width (cm)')
+plt.title('Iris Dataset')
 plot_clusters(root, X)
 plt.show()
 
