@@ -22,6 +22,7 @@ class TreeNode:
         self.is_split = False
         # The threshold value used to split this node.
         self.threshold = None
+        self.i = None
 
 
 class ThresholdTree:
@@ -60,7 +61,7 @@ class ThresholdTree:
         # A set of nodes that have already been processed during the tree construction.
         self.processed_nodes = set()
 
-    def divide_and_share(self, node, i, theta, sigma, epsilon):
+    def divide_and_share(self, node, theta, sigma, epsilon):
         # Get the centers from the node.
         centers = node.centers
         # Print the number of centers.
@@ -75,8 +76,14 @@ class ThresholdTree:
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
         # Randomly choose a threshold value t from {0, R}.
         t = np.random.choice([0, R])
+        i = np.random.randint(0, 2)
         # Compute the threshold value.
-        threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+        if i == 0:
+            # Compute the threshold value for a vertical split.
+            threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+        else:
+            # Compute the threshold value for a horizontal split.
+            threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         # Split the centers into two groups by the threshold.
         left_centers = [c for c in centers if self.X[c, i] <= threshold]
         right_centers = [c for c in centers if self.X[c, i] > threshold]
@@ -85,14 +92,15 @@ class ThresholdTree:
         print(f"Node centers: {centers}")
         print(f"Mean: {mean}")
         print(f"R: {R}")
-        print(f"Threshold: {threshold}")
+        print(f"Threshold (dimension {i}): {threshold}")
         if len(left_centers) > 0:
             print(f"Left centers: {left_centers}")
         if len(right_centers) > 0:
             print(f"Right centers: {right_centers}")
         print("--------------------")
-        # Set the threshold attribute of the node to the computed threshold.
+        # Set the threshold and i attributes of the node.
         node.threshold = threshold
+        node.i = i
         # If both the left and right child have centers, create two new child nodes and set the is_split attribute of the current node to True.
         if len(left_centers) > 0 and len(right_centers) > 0:
             node.left_child = TreeNode(left_centers)
@@ -102,12 +110,8 @@ class ThresholdTree:
         # If one of the child nodes is empty, recursively call divide_and_share until it can be split into two non-empty children.
         else:
             while True:
-                # Choose new parameters.
-                theta = np.random.uniform(0, 1)
-                sigma = np.random.choice([-1, 1])
-                i = np.random.randint(self.X.shape[1])
                 # Recursively call divide_and_share.
-                left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                left_child, right_child = self.divide_and_share(node, theta, sigma, epsilon)
                 if left_child is not None and right_child is not None:
                     node.left_child = left_child
                     node.right_child = right_child
@@ -137,7 +141,7 @@ class ThresholdTree:
                     sigma = np.random.choice([-1, 1])
                     i = np.random.randint(self.X.shape[1])
                     # Divide the node into two children using the divide_and_share method.
-                    left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                    left_child, right_child = self.divide_and_share(node, theta, sigma, epsilon)
                     if left_child is not None and left_child not in self.processed_nodes:
                         # Add the left child to the queue if it has not been processed before.
                         queue.append(left_child)
@@ -179,9 +183,13 @@ def plot_clusters(node, X):
         # Recursively call plot_clusters on left and right children of node
         plot_clusters(node.left_child, X)
         plot_clusters(node.right_child, X)
-        # If node is split, plot a vertical line at its threshold value
-        if node.is_split:
+        # If node is split and i=0, plot a vertical line at its threshold value
+        if node.is_split and node.i == 0:
             plt.axvline(x=node.threshold, color='k', linestyle='--', linewidth=1)
+        # If node is split and i=1, plot a horizontal line at its threshold value
+        elif node.is_split and node.i == 1:
+            plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
+
 
 # Start the timer
 start_time = time.time()
