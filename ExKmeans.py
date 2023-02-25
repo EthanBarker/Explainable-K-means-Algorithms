@@ -61,17 +61,20 @@ class ThresholdTree:
         # A set of nodes that have already been processed during the tree construction.
         self.processed_nodes = set()
 
+
     def divide_and_share(self, i, node, theta, sigma, epsilon):
         # Get the centers from the node.
         centers = node.centers
         # Print the number of centers.
         print(f"Number of centers: {len(centers)}")
+        # Print the coordinates of the centers.
+        print(f"Centers: {self.X[centers][:, :2]}")
         # If the node has already been split or only contains one center, return None for both children
         # since divide and share fails in this case.
         if node.is_split or len(centers) == 1:
             return None, None
         # Calculate the mean of all the centers.
-        mean = np.mean(self.X[centers], axis=0)
+        mean = np.mean(self.X[centers][:, :2], axis=0)
         # Compute the maximum distance from each center to the mean.
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
         # Randomly choose a threshold value t from {0, R}.
