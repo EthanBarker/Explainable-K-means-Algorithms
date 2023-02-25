@@ -76,7 +76,6 @@ class ThresholdTree:
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
         # Randomly choose a threshold value t from {0, R}.
         t = np.random.choice([0, R])
-        i = np.random.randint(0, 2)
         # Compute the threshold value.
         threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         # Split the centers into two groups by the threshold.
