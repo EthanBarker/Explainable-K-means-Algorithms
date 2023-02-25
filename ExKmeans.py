@@ -11,7 +11,7 @@ X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 y = iris.target
 
 # Run k-means clustering to find the coordinates of the centers.
-kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans = KMeans(n_clusters=3, init='k-means++', n_init=10)
 kmeans.fit(X)
 centers = kmeans.cluster_centers_
 print(f"K-means centers: {centers}")
@@ -44,16 +44,16 @@ class ThresholdTree:
     Parameters:
         X: numpy array
             The data points to be clustered.
-        C: list
-            The indices of the data points that belong to the current node.
+        centers: numpy array
+            The centers of the k-means clustering algorithm.
         delta: float
             The error parameter for the clustering algorithm.
 
     Attributes:
         X: numpy array
             The data points to be clustered.
-        C: list
-            The indices of the data points that belong to the current node.
+        centers: numpy array
+            The centers of the k-means clustering algorithm.
         delta: float
             The error parameter for the clustering algorithm.
         root: TreeNode object
@@ -61,15 +61,15 @@ class ThresholdTree:
         processed_nodes: set
             A set of nodes that have already been processed during the tree construction.
     """
-    def __init__(self, X, C, delta):
+    def __init__(self, X, centers, delta):
         # The data points to be clustered.
         self.X = X
-        # The indices of the data points that belong to the current node.
-        self.C = C
+        # The centers of the k-means clustering algorithm.
+        self.centers = centers
         # The error parameter for the clustering algorithm.
         self.delta = delta
         # The root node of the tree.
-        self.root = TreeNode(C)
+        self.root = TreeNode(range(len(centers)))
         # A set of nodes that have already been processed during the tree construction.
         self.processed_nodes = set()
 
@@ -131,7 +131,7 @@ class ThresholdTree:
         return node.left_child, node.right_child
 
     def build(self):
-        k = len(self.C)
+        k = len(self.centers)
         # Calculate the value of epsilon using delta and the number of clusters k.
         epsilon = min(self.delta / (15 * np.log(k)), 1 / 384)
         # Initialize a queue with the root node.
@@ -208,8 +208,7 @@ k = 3
 C = np.arange(k)
 
 # construct the threshold tree
-delta = 0
-tree = ThresholdTree(X, C, delta)
+tree = ThresholdTree(X, centers, delta=0.1)
 root = tree.build()
 
 # End timer and then display time taken to run in terminal
