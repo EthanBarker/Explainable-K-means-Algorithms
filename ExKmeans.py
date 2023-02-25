@@ -61,7 +61,7 @@ class ThresholdTree:
         # A set of nodes that have already been processed during the tree construction.
         self.processed_nodes = set()
 
-    def divide_and_share(self, node, theta, sigma, epsilon):
+    def divide_and_share(self, i, node, theta, sigma, epsilon):
         # Get the centers from the node.
         centers = node.centers
         # Print the number of centers.
@@ -78,12 +78,7 @@ class ThresholdTree:
         t = np.random.choice([0, R])
         i = np.random.randint(0, 2)
         # Compute the threshold value.
-        if i == 0:
-            # Compute the threshold value for a vertical split.
-            threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
-        else:
-            # Compute the threshold value for a horizontal split.
-            threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+        threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         # Split the centers into two groups by the threshold.
         left_centers = [c for c in centers if self.X[c, i] <= threshold]
         right_centers = [c for c in centers if self.X[c, i] > threshold]
@@ -111,7 +106,7 @@ class ThresholdTree:
         else:
             while True:
                 # Recursively call divide_and_share.
-                left_child, right_child = self.divide_and_share(node, theta, sigma, epsilon)
+                left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
                 if left_child is not None and right_child is not None:
                     node.left_child = left_child
                     node.right_child = right_child
@@ -139,9 +134,9 @@ class ThresholdTree:
                     # Generate random values for theta and sigma.
                     theta = np.random.uniform(0, 1)
                     sigma = np.random.choice([-1, 1])
-                    i = np.random.randint(self.X.shape[1])
+                    i = np.random.randint(0, 2)
                     # Divide the node into two children using the divide_and_share method.
-                    left_child, right_child = self.divide_and_share(node, theta, sigma, epsilon)
+                    left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
                     if left_child is not None and left_child not in self.processed_nodes:
                         # Add the left child to the queue if it has not been processed before.
                         queue.append(left_child)
