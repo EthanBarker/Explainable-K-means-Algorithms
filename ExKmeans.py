@@ -135,27 +135,26 @@ class ThresholdTree:
                     # Generate random values for theta and sigma.
                     theta = np.random.uniform(0, 1)
                     sigma = np.random.choice([-1, 1])
-                    # Iterate through each dimension of the data points.
-                    for i in range(self.X.shape[1]):
-                        # Divide the node into two children using the divide_and_share method.
-                        left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
-                        if left_child is not None and left_child not in self.processed_nodes:
-                            # Add the left child to the queue if it has not been processed before.
-                            queue.append(left_child)
-                            print(
-                                f"Added node with centers {left_child.centers} as the left child of node with centers {centers}.")
-                        if right_child is not None and right_child not in self.processed_nodes:
-                            # Add the right child to the queue if it has not been processed before.
-                            queue.append(right_child)
-                            print(
-                                f"Added node with centers {right_child.centers} as the right child of node with centers {centers}.")
-                        if (left_child is not None and len(left_child.centers) == 1) and (
-                                right_child is not None and len(right_child.centers) == 1):
-                            # If all nodes have only one center, stop the algorithm.
-                            print(f"Stopping the algorithm because all nodes have only one center.")
-                            self.processed_nodes.add(left_child)  # Mark the left child as processed.
-                            self.processed_nodes.add(right_child)  # Mark the right child as processed.
-                            break
+                    i = np.random.randint(self.X.shape[1])
+                    # Divide the node into two children using the divide_and_share method.
+                    left_child, right_child = self.divide_and_share(node, i, theta, sigma, epsilon)
+                    if left_child is not None and left_child not in self.processed_nodes:
+                        # Add the left child to the queue if it has not been processed before.
+                        queue.append(left_child)
+                        print(
+                            f"Added node with centers {left_child.centers} as the left child of node with centers {centers}.")
+                    if right_child is not None and right_child not in self.processed_nodes:
+                        # Add the right child to the queue if it has not been processed before.
+                        queue.append(right_child)
+                        print(
+                            f"Added node with centers {right_child.centers} as the right child of node with centers {centers}.")
+                    if (left_child is not None and len(left_child.centers) == 1) and (
+                            right_child is not None and len(right_child.centers) == 1):
+                        # If all nodes have only one center, stop the algorithm.
+                        print(f"Stopping the algorithm because all nodes have only one center.")
+                        self.processed_nodes.add(left_child)  # Mark the left child as processed.
+                        self.processed_nodes.add(right_child)  # Mark the right child as processed.
+                        break
                 # Mark the current node as processed.
                 self.processed_nodes.add(node)
         # Return the root node of the tree.
