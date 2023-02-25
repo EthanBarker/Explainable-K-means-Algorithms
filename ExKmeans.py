@@ -1,8 +1,20 @@
 import time
 import numpy as np
 from matplotlib import pyplot as plt
+from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 import scipy.cluster.hierarchy as shc
+
+# load the iris dataset
+iris = load_iris()
+X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
+y = iris.target
+
+# Run k-means clustering to find the coordinates of the centers.
+kmeans = KMeans(n_clusters=3, random_state=42)
+kmeans.fit(X)
+centers = kmeans.cluster_centers_
+print(f"K-means centers: {centers}")
 
 class TreeNode:
     """
@@ -190,12 +202,6 @@ def plot_clusters(node, X):
 
 # Start the timer
 start_time = time.time()
-
-# load the iris dataset
-iris = load_iris()
-X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
-y = iris.target
-
 
 # Initialize the centers as the first k samples in X
 k = 3
