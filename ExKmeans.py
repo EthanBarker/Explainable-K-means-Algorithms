@@ -1,25 +1,12 @@
 import time
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 import scipy.cluster.hierarchy as shc
-
-# load the iris dataset
-iris = load_iris()
-X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
-y = iris.target
-
-# Run k-means clustering to find the coordinates of the centers.
-kmeans = KMeans(n_clusters=3, init='k-means++', n_init=10)
-kmeans.fit(X)
-centers = kmeans.cluster_centers_
-print(f"K-means centers: {centers}")
 
 class TreeNode:
     """
     A node in the threshold tree.
-
     Args:
         centers (list): The indices of the data points associated with this node.
     """
@@ -40,20 +27,18 @@ class TreeNode:
 class ThresholdTree:
     """
     A binary tree used to partition data points using the threshold algorithm.
-
     Parameters:
         X: numpy array
             The data points to be clustered.
-        centers: numpy array
-            The centers of the k-means clustering algorithm.
+        C: list
+            The indices of the data points that belong to the current node.
         delta: float
             The error parameter for the clustering algorithm.
-
     Attributes:
         X: numpy array
             The data points to be clustered.
-        centers: numpy array
-            The centers of the k-means clustering algorithm.
+        C: list
+            The indices of the data points that belong to the current node.
         delta: float
             The error parameter for the clustering algorithm.
         root: TreeNode object
@@ -61,15 +46,15 @@ class ThresholdTree:
         processed_nodes: set
             A set of nodes that have already been processed during the tree construction.
     """
-    def __init__(self, X, centers, delta):
+    def __init__(self, X, C, delta):
         # The data points to be clustered.
         self.X = X
-        # The centers of the k-means clustering algorithm.
-        self.centers = centers
+        # The indices of the data points that belong to the current node.
+        self.C = C
         # The error parameter for the clustering algorithm.
         self.delta = delta
         # The root node of the tree.
-        self.root = TreeNode(range(len(centers)))
+        self.root = TreeNode(C)
         # A set of nodes that have already been processed during the tree construction.
         self.processed_nodes = set()
 
@@ -131,7 +116,7 @@ class ThresholdTree:
         return node.left_child, node.right_child
 
     def build(self):
-        k = len(self.centers)
+        k = len(self.C)
         # Calculate the value of epsilon using delta and the number of clusters k.
         epsilon = min(self.delta / (15 * np.log(k)), 1 / 384)
         # Initialize a queue with the root node.
@@ -203,12 +188,19 @@ def plot_clusters(node, X):
 # Start the timer
 start_time = time.time()
 
+# load the iris dataset
+iris = load_iris()
+X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
+y = iris.target
+
+
 # Initialize the centers as the first k samples in X
 k = 3
 C = np.arange(k)
 
 # construct the threshold tree
-tree = ThresholdTree(X, centers, delta=0.1)
+delta = 0
+tree = ThresholdTree(X, C, delta)
 root = tree.build()
 
 # End timer and then display time taken to run in terminal
