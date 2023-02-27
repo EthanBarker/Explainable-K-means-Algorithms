@@ -196,7 +196,8 @@ y = iris.target
 
 # Initialize the centers as the first k samples in X
 k = 3
-C = np.arange(k)
+C = np.random.choice(range(X.shape[0]), size=3, replace=False)
+print(C)
 
 # construct the threshold tree
 delta = 0
