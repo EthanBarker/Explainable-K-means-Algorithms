@@ -195,13 +195,11 @@ y = iris.target
 
 
 # Initialize the centers as the first k samples in X
-k = 3
 C = np.random.choice(range(X.shape[0]), size=3, replace=False)
 print(C)
 
 # construct the threshold tree
-delta = 0
-tree = ThresholdTree(X, C, delta)
+tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
 
 # End timer and then display time taken to run in terminal
