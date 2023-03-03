@@ -1,6 +1,7 @@
 import time
 import numpy as np
 from matplotlib import pyplot as plt
+from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 import scipy.cluster.hierarchy as shc
 
@@ -193,9 +194,18 @@ iris = load_iris()
 X = iris.data[:, :2] # CHANGE HERE: Use only the first 2 columns
 y = iris.target
 
+k = 3  # number of clusters
+kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)  # run k-means
+centers = kmeans.cluster_centers_  # get the centers
+print("K-means centers =", centers)
 
-# Initialize the centers as the first k samples in X
-C = np.random.choice(range(X.shape[0]), size=3, replace=False)
+# convert centers to indices
+C = []
+for c in centers:
+    dists = np.linalg.norm(X - c, axis=1)  # calculate the distances to all points
+    index = np.argmin(dists)  # find the index of the point closest to the center
+    C.append(index)
+C = np.array(C)
 print(C)
 
 # construct the threshold tree
