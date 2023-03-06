@@ -193,8 +193,8 @@ X_train = np.array(X_train)[:, :2]
 X_test = np.array(X_test)[:, :2]
 
 #Run k-means
-k = 3
-kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X_train)
+k = 10
+kmeans = KMeans(n_clusters=k, random_state=0, n_init = 100).fit(X_train)
 centers = kmeans.cluster_centers_
 print("K-means centers =", centers)
 
@@ -219,3 +219,12 @@ print("Time elapsed: ", end_time - start_time)
 #plt.figure(figsize=(10, 7))
 #plt.title("Threshold Tree Dendrogram")
 #dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
+visualize_ASCII_tree(root)
+
+# Plot the datapoints and threshold lines
+#plt.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y)
+#plt.xlabel('Feature 1')
+#plt.ylabel('Feature 2')
+#plt.title('Avilla Dataset')
+#plot_clusters(root, X)
+#plt.show()
