@@ -1,9 +1,13 @@
 import time
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 import scipy.cluster.hierarchy as shc
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
 
 class TreeNode:
     """
@@ -170,28 +174,41 @@ def plot_clusters(node, X):
 # Start the timer
 start_time = time.time()
 
-# load the iris dataset
-iris = load_iris()
-X = iris.data[:, :2]
-y = iris.target
+# Load the Avila dataset.
+data = pd.read_csv("avila-tr.txt", header=None)
+
+# Split the data into features and labels.
+X = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+
+# Convert the labels to integers.
+le = LabelEncoder()
+y = le.fit_transform(y)
+
+# Split the data into training and testing sets.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Convert the data to numpy arrays.
+X_train = np.array(X_train)[:, :2]
+X_test = np.array(X_test)[:, :2]
 
 #Run k-means
 k = 3
-kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
+kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X_train)
 centers = kmeans.cluster_centers_
 print("K-means centers =", centers)
 
 # convert centers to indices
 C = []
 for c in centers:
-    dists = np.linalg.norm(X - c, axis=1)
+    dists = np.linalg.norm(X_train - c, axis=1)
     index = np.argmin(dists)
     C.append(index)
 C = np.array(C)
 print(C)
 
 # construct the threshold tree
-tree = ThresholdTree(X, C, delta=0.1)
+tree = ThresholdTree(X_train, C, delta=0.1)
 root = tree.build()
 
 # End timer and then display time taken to run in terminal
@@ -202,11 +219,3 @@ print("Time elapsed: ", end_time - start_time)
 #plt.figure(figsize=(10, 7))
 #plt.title("Threshold Tree Dendrogram")
 #dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
-
-# Plot the datapoints and threshold lines
-plt.scatter(X[:, 0], X[:, 1], c=y)
-plt.xlabel('Sepal length (cm)')
-plt.ylabel('Sepal width (cm)')
-plt.title('Iris Dataset')
-plot_clusters(root, X)
-plt.show()
