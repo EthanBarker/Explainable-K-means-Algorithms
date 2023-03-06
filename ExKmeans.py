@@ -55,9 +55,12 @@ class ThresholdTree:
 
     def divide_and_share(self, i, node, theta, sigma, epsilon):
         # Get the centers inside of the node.
+        print("--------------------")
         centers = node.centers
         print(f"Number of centers: {len(centers)}")
+        print("--------------------")
         print(f"Centers: {self.X[centers][:, :2]}")
+        print("--------------------")
         # Check if a node has already been split or if it only has one centre.
         if node.is_split or len(centers) == 1:
             return None, None
@@ -90,16 +93,18 @@ class ThresholdTree:
             node.left_child = TreeNode(left_centers)
             node.right_child = TreeNode(right_centers)
             node.is_split = True
-            self.processed_nodes.add(node)
         # If one of the child nodes is empty, recursively call divide_and_share.
         else:
             while True:
                 left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
-                if left_child is not None and right_child is not None:
+                if left_child is not None and right_child is not None and len(centers) > 1:
                     node.left_child = left_child
                     node.right_child = right_child
                     node.is_split = True
                     self.processed_nodes.add(node)
+                    print("--------------------")
+                    print(f"Added node with centers {node.centers} to processed nodes.")
+                    print("--------------------")
                     break
         # Return the child nodes.
         return node.left_child, node.right_child
@@ -127,19 +132,20 @@ class ThresholdTree:
                     if left_child is not None and left_child not in self.processed_nodes:
                         # Add the left child to the queue if it has not been processed.
                         queue.append(left_child)
-                        print(
-                            f"Added node with centers {left_child.centers} as the left child of node with centers {centers}.")
+                        print(f"Added node with centers {left_child.centers} as the left child of node with centers {centers}.")
                     if right_child is not None and right_child not in self.processed_nodes:
                         # Add the right child to the queue if it has not been processed.
                         queue.append(right_child)
-                        print(
-                            f"Added node with centers {right_child.centers} as the right child of node with centers {centers}.")
+                        print(f"Added node with centers {right_child.centers} as the right child of node with centers {centers}.")
                     if (left_child is not None and len(left_child.centers) == 1) and (
                             right_child is not None and len(right_child.centers) == 1):
                         # If all nodes have only one center, stop the algorithm.
+                        print("--------------------")
                         print(f"Stopping the algorithm because all nodes have only one center.")
                         self.processed_nodes.add(left_child)  # Mark as processed.
+                        print(f"Added processed node with centers {left_child.centers}")
                         self.processed_nodes.add(right_child)  # Mark as processed.
+                        print(f"Added processed node with centers {right_child.centers}")
                         break
                 # Mark node as processed.
                 self.processed_nodes.add(node)
