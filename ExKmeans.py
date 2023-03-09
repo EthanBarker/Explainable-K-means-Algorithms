@@ -15,9 +15,11 @@ class TreeNode:
     Args:
         centers (list): The x and y values of a data point in this node.
     """
-    def __init__(self, centers):
+    def __init__(self, centers, cluster_index=None):
         # The x and y coordinates of the data points in this node.
         self.centers = centers
+        # The cluster index of the node.
+        self.cluster_index = cluster_index
         # The left child of the node.
         self.left_child = None
         # The right child of the node.
@@ -28,6 +30,7 @@ class TreeNode:
         self.threshold = None
         # The dimension used to split the node i = 0 is x and i = 1 is y.
         self.i = None
+
 
 class ThresholdTree:
     """
@@ -175,16 +178,16 @@ def plot_clusters(node, X):
         # If node is split and i=1, plot a horizontal line at its threshold value
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
+def assign_cluster(X, root):
+    return [assign_cluster_helper(x, root) for x in X]
 
-def assign_cluster(x, node):
+def assign_cluster_helper(x, node):
     while not node.is_split:
         if x[node.i] < node.threshold:
             node = node.left_child
         else:
             node = node.right_child
-    return node.centers
-
-
+    return node.cluster_index
 
 def calculate_cost(clusters, X, assignments):
     cost = 0
@@ -223,10 +226,14 @@ print(C)
 # construct the threshold tree
 tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
-clusters = [assign_cluster(x, root) for x in X]
+
+# Find clusters
+clusters = assign_cluster(X, root)
+print(clusters)
 
 #Calculate cost
-cost = calculate_cost(C, X, clusters)
+cost = calculate_cost(centers, X, clusters)
+print(assignments)
 print("Cost =", cost)
 
 # End timer and then display time taken to run in terminal
