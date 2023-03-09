@@ -176,6 +176,16 @@ def plot_clusters(node, X):
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
 
+def calculate_cost(clusters, X, assignments):
+    cost = 0
+    for i, cluster in enumerate(clusters):
+        points_in_cluster = X[assignments == i]
+        if len(points_in_cluster) > 0:
+            center = np.mean(points_in_cluster, axis=0)
+            cluster_cost = np.sum(np.linalg.norm(points_in_cluster - center, axis=1)**2)
+            cost += cluster_cost
+    return cost
+
 # Start the timer
 start_time = time.time()
 
@@ -188,6 +198,7 @@ y = iris.target
 k = 3
 kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
 centers = kmeans.cluster_centers_
+assignments = kmeans.predict(X)
 print("K-means centers =", centers)
 
 # convert centers to indices
@@ -202,6 +213,10 @@ print(C)
 # construct the threshold tree
 tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
+
+#Calculate cost
+cost = calculate_cost(C, X, assignments)
+print("Cost =", cost)
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
