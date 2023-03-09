@@ -176,6 +176,16 @@ def plot_clusters(node, X):
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
 
+def assign_cluster(x, node):
+    while not node.is_split:
+        if x[node.i] < node.threshold:
+            node = node.left_child
+        else:
+            node = node.right_child
+    return node.centers
+
+
+
 def calculate_cost(clusters, X, assignments):
     cost = 0
     for i, cluster in enumerate(clusters):
@@ -213,9 +223,10 @@ print(C)
 # construct the threshold tree
 tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
+clusters = [assign_cluster(x, root) for x in X]
 
 #Calculate cost
-cost = calculate_cost(C, X, assignments)
+cost = calculate_cost(C, X, clusters)
 print("Cost =", cost)
 
 # End timer and then display time taken to run in terminal
