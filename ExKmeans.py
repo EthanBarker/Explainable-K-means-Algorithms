@@ -175,6 +175,26 @@ def plot_clusters(node, X):
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
 
+def convert_centers_to_indices(X, centers):
+    C = []
+    for c in centers:
+        dists = np.linalg.norm(X - c, axis=1)
+        index = np.argmin(dists)
+        C.append(index)
+    C = np.array(C)
+    return C
+def assign_using_threshold_tree(X, root):
+    new_assignments = np.zeros(len(X))
+    for i, x in enumerate(X):
+        node = root
+        while node.left_child is not None:
+            if x[node.i] < node.threshold:
+                node = node.left_child
+            else:
+                node = node.right_child
+        new_assignments[i] = node.centers[0]
+    return new_assignments
+
 def calculate_cost(clusters, X, assignments):
     cost = 0
     for i, cluster in enumerate(clusters):
@@ -209,32 +229,16 @@ kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
 print("K-means centers =", centers)
+C = convert_centers_to_indices(X, centers)
 
-# convert centers to indices
-C = []
-for c in centers:
-    dists = np.linalg.norm(X - c, axis=1)
-    index = np.argmin(dists)
-    C.append(index)
-C = np.array(C)
-print(C)
-
-# construct the threshold tree
+# Construct the threshold tree
 tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
 
-# Assign each data point to a new center using the threshold tree
-new_assignments = np.zeros_like(assignments)
-for i, x in enumerate(X):
-    node = root
-    while node.left_child is not None:
-        if x[node.i] < node.threshold:
-            node = node.left_child
-        else:
-            node = node.right_child
-    new_assignments[i] = node.centers[0]
+#Assign using threshold tree
+new_assignments = assign_using_threshold_tree(X, root)
 
-# Calculate cost
+# Calculate costs and print info
 cost = calculate_cost(centers, X, assignments)
 cost2 = calculate_cost2(C, X, new_assignments)
 print("K-means Assignments =", assignments)
