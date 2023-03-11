@@ -185,6 +185,16 @@ def calculate_cost(clusters, X, assignments):
             cost += cluster_cost
     return cost
 
+def calculate_cost2(clusters, X, assignments):
+    cost = 0
+    for i, cluster in enumerate(clusters):
+        points_in_cluster = X[assignments == cluster]
+        if len(points_in_cluster) > 0:
+            center = np.mean(points_in_cluster, axis=0)
+            cluster_cost = np.sum(np.linalg.norm(points_in_cluster - center, axis=1)**2)
+            cost += cluster_cost
+    return cost
+
 # Start the timer
 start_time = time.time()
 
@@ -226,7 +236,7 @@ for i, x in enumerate(X):
 
 # Calculate cost
 cost = calculate_cost(centers, X, assignments)
-cost2 = calculate_cost(C, X, new_assignments)
+cost2 = calculate_cost2(C, X, new_assignments)
 print("K-means Assignments =", assignments)
 print("New Assignments =", new_assignments)
 print("K-Means Cost =", cost)
