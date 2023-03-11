@@ -8,7 +8,6 @@ import scipy.cluster.hierarchy as shc
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-
 class TreeNode:
     """
     TreeNode represents a singe node inside of the tree
@@ -214,9 +213,21 @@ print(C)
 tree = ThresholdTree(X, C, delta=0.1)
 root = tree.build()
 
-#Calculate cost
-cost = calculate_cost(centers, X, assignments)
-print(assignments)
+# Assign each data point to a new center using the threshold tree
+new_assignments = np.zeros_like(assignments)
+for i, x in enumerate(X):
+    node = root
+    while node.left_child is not None:
+        if x[node.i] < node.threshold:
+            node = node.left_child
+        else:
+            node = node.right_child
+    new_assignments[i] = node.centers[0]
+
+# Calculate cost
+cost = calculate_cost(C, X, new_assignments)
+print("K-means Assignments =", assignments)
+print("New Assignments =", new_assignments)
 print("Cost =", cost)
 
 # End timer and then display time taken to run in terminal
