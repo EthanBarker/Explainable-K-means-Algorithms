@@ -225,10 +225,12 @@ for i, x in enumerate(X):
     new_assignments[i] = node.centers[0]
 
 # Calculate cost
-cost = calculate_cost(C, X, new_assignments)
+cost = calculate_cost(centers, X, assignments)
+cost2 = calculate_cost(C, X, new_assignments)
 print("K-means Assignments =", assignments)
 print("New Assignments =", new_assignments)
-print("Cost =", cost)
+print("K-Means Cost =", cost)
+print("New Cost =", cost2)
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
