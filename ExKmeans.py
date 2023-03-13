@@ -35,7 +35,7 @@ class ThresholdTree:
         X: numpy array
             Data points to be clustered.
         C: list
-            Data points that belong to the current node.
+            Centres that belong to the current node.
         delta: float
             The error parameter.
     Attributes:
