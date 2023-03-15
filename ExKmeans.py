@@ -68,11 +68,25 @@ class ThresholdTree:
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
         # Randomly choose a threshold value t.
         t = np.random.choice([0, R])
-        # Compute the threshold value.
-        threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+
+        if i < 2:
+            # Compute the threshold value for vertical or horizontal cuts.
+            threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+        else:
+            # Compute the slope and intercept for diagonal cuts.
+            slope = np.random.uniform(-1, 1)
+            intercept = mean[1] - slope * mean[0]
+            threshold = (slope, intercept)
+
         # Split the centers into two groups by the threshold.
-        left_centers = [c for c in centers if self.X[c, i] <= threshold]
-        right_centers = [c for c in centers if self.X[c, i] > threshold]
+        if i < 2:
+            left_centers = [c for c in centers if self.X[c, i] <= threshold]
+            right_centers = [c for c in centers if self.X[c, i] > threshold]
+        else:
+            slope, intercept = threshold
+            left_centers = [c for c in centers if self.X[c, 1] <= slope * self.X[c, 0] + intercept]
+            right_centers = [c for c in centers if self.X[c, 1] > slope * self.X[c, 0] + intercept]
+
         print("--------------------")
         print(f"Node centers: {centers}")
         print(f"Mean: {mean}")
@@ -124,7 +138,7 @@ class ThresholdTree:
                     # Generate random values for theta and sigma and i.
                     theta = np.random.uniform(0, 1)
                     sigma = np.random.choice([-1, 1])
-                    i = np.random.randint(0, 2)
+                    i = np.random.randint(0, 3)
                     # Call divide_and_share to split the node.
                     left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
                     if left_child is not None and left_child not in self.processed_nodes:
@@ -174,6 +188,12 @@ def plot_clusters(node, X):
         # If node is split and i=1, plot a horizontal line at its threshold value
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
+        # If node is split and i=2, plot a diagonal line using the slope and intercept
+        elif node.is_split and node.i == 2:
+            slope, intercept = node.threshold
+            x_values = np.linspace(np.min(X[:, 0]), np.max(X[:, 0]), 100)
+            y_values = slope * x_values + intercept
+            plt.plot(x_values, y_values, color='k', linestyle='--', linewidth=1)
 
 def convert_centers_to_indices(X, centers):
     C = []
@@ -188,10 +208,18 @@ def assign_using_threshold_tree(X, root):
     for i, x in enumerate(X):
         node = root
         while node.left_child is not None:
-            if x[node.i] < node.threshold:
-                node = node.left_child
+            if node.i == 2:
+                slope, intercept = node.threshold
+                y_value = slope * x[0] + intercept
+                if x[1] < y_value:
+                    node = node.left_child
+                else:
+                    node = node.right_child
             else:
-                node = node.right_child
+                if x[node.i] < node.threshold:
+                    node = node.left_child
+                else:
+                    node = node.right_child
         new_assignments[i] = node.centers[0]
     return new_assignments
 
