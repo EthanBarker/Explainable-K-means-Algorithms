@@ -51,42 +51,42 @@ class ThresholdTree:
         self.root = TreeNode(C)
         self.processed_nodes = set()
 
-    def divide_and_share(self, node, theta, epsilon):
+    def divide_and_share(self, i, node, theta, sigma, epsilon):
         # Get the centers inside of the node.
-        centers = node.centers
         print("--------------------")
+        centers = node.centers
         print(f"Number of centers: {len(centers)}")
         print("--------------------")
         print(f"Centers: {self.X[centers][:, :2]}")
         print("--------------------")
-        # Check if a node has already been split or if it only has one center.
+        # Check if a node has already been split or if it only has one centre.
         if node.is_split or len(centers) == 1:
             return None, None
         # Calculate the mean.
         mean = np.mean(self.X[centers][:, :2], axis=0)
-        # Find the distance from the furthest center to the mean.
+        # Find the distance from the furtest centre to the mean.
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
-        # Randomly choose slope (m) and intercept (b) values.
-        m = np.random.uniform(-1, 1)
-        b = np.random.uniform(-R, R)
-        # Split the centers into two groups by the diagonal line.
-        left_centers = [c for c in centers if self.X[c, 1] <= m * self.X[c, 0] + b]
-        right_centers = [c for c in centers if self.X[c, 1] > m * self.X[c, 0] + b]
+        # Randomly choose a threshold value t.
+        t = np.random.choice([0, R])
+        # Compute the threshold value.
+        threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
+        # Split the centers into two groups by the threshold.
+        left_centers = [c for c in centers if self.X[c, i] <= threshold]
+        right_centers = [c for c in centers if self.X[c, i] > threshold]
         print("--------------------")
         print(f"Node centers: {centers}")
         print(f"Mean: {mean}")
         print(f"R: {R}")
-        print(f"Slope (m): {m}")
-        print(f"Intercept (b): {b}")
+        print(f"Threshold (dimension {i}): {threshold}")
         if len(left_centers) > 0:
             print(f"Left centers: {left_centers}")
         if len(right_centers) > 0:
             print(f"Right centers: {right_centers}")
         print("--------------------")
-        # Set the slope and intercept values.
-        node.m = m
-        node.b = b
-        # If both the left and right child have centers, create child nodes and set is_split to True.
+        # Set the threshold and i values.
+        node.threshold = threshold
+        node.i = i
+        # If both the left/ right child have centers, create child nodes and set is_split to True.
         if len(left_centers) > 0 and len(right_centers) > 0:
             node.left_child = TreeNode(left_centers)
             node.right_child = TreeNode(right_centers)
@@ -94,12 +94,15 @@ class ThresholdTree:
         # If one of the child nodes is empty, recursively call divide_and_share.
         else:
             while True:
-                left_child, right_child = self.divide_and_share(node, theta, epsilon)
+                left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
                 if left_child is not None and right_child is not None and len(centers) > 1:
                     node.left_child = left_child
                     node.right_child = right_child
                     node.is_split = True
                     self.processed_nodes.add(node)
+                    print("--------------------")
+                    print(f"Added node with centers {node.centers} to processed nodes.")
+                    print("--------------------")
                     break
         # Return the child nodes.
         return node.left_child, node.right_child
@@ -123,7 +126,7 @@ class ThresholdTree:
                     sigma = np.random.choice([-1, 1])
                     i = np.random.randint(0, 2)
                     # Call divide_and_share to split the node.
-                    left_child, right_child = self.divide_and_share(node, theta, epsilon)
+                    left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
                     if left_child is not None and left_child not in self.processed_nodes:
                         # Add the left child to the queue if it has not been processed.
                         queue.append(left_child)
@@ -158,19 +161,19 @@ def visualize_ASCII_tree(node, depth=0):
     visualize_ASCII_tree(node.right_child, depth + 2)
 
 def plot_clusters(node, X):
-    # If node is None, return.
+    # If node is None, return
     if node is None:
         return
     else:
-        # Recursively call plot_clusters on left and right children of the node.
+        # Recursively call plot_clusters on left and right children of node
         plot_clusters(node.left_child, X)
         plot_clusters(node.right_child, X)
-        # If the node is split, plot a diagonal line using its slope (m) and intercept (b).
-        if node.is_split:
-            x_min, x_max = np.min(X[:, 0]), np.max(X[:, 0])
-            y_min = node.m * x_min + node.b
-            y_max = node.m * x_max + node.b
-            plt.plot([x_min, x_max], [y_min, y_max], 'k--', linewidth=1)
+        # If node is split and i=0, plot a vertical line at its threshold value
+        if node.is_split and node.i == 0:
+            plt.axvline(x=node.threshold, color='k', linestyle='--', linewidth=1)
+        # If node is split and i=1, plot a horizontal line at its threshold value
+        elif node.is_split and node.i == 1:
+            plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
 
 def convert_centers_to_indices(X, centers):
     C = []
@@ -185,7 +188,7 @@ def assign_using_threshold_tree(X, root):
     for i, x in enumerate(X):
         node = root
         while node.left_child is not None:
-            if x[1] < node.m * x[0] + node.b:
+            if x[node.i] < node.threshold:
                 node = node.left_child
             else:
                 node = node.right_child
