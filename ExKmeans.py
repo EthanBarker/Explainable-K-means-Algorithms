@@ -5,8 +5,6 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 import scipy.cluster.hierarchy as shc
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 
 class TreeNode:
     """
@@ -25,7 +23,7 @@ class TreeNode:
         self.is_split = False
         # The threshold value.
         self.threshold = None
-        # The dimension used to split the node i = 0 is x and i = 1 is y.
+        # The dimension used to split the node i = 0 is x and i = 1 is y, i = 2 is diagonal.
         self.i = None
 
 class ThresholdTree:
@@ -68,17 +66,15 @@ class ThresholdTree:
         R = np.max([np.linalg.norm(self.X[centers[j]] - mean) ** 2 for j in range(len(centers))])
         # Randomly choose a threshold value t.
         t = np.random.choice([0, R])
-
         if i < 2:
-            # Compute the threshold value for vertical or horizontal cuts.
+            # Find threshold value for vertical/ horizontal lines.
             threshold = mean[i] - sigma * np.sqrt(theta * t) + epsilon * np.sqrt(theta * R)
         else:
-            # Compute the slope and intercept for diagonal cuts.
+            # Find slope and intercept for diagonal.
             slope = np.random.uniform(-1, 1)
             intercept = mean[1] - slope * mean[0]
             threshold = (slope, intercept)
-
-        # Split the centers into two groups by the threshold.
+        # Split the centers into two groups.
         if i < 2:
             left_centers = [c for c in centers if self.X[c, i] <= threshold]
             right_centers = [c for c in centers if self.X[c, i] > threshold]
@@ -86,7 +82,6 @@ class ThresholdTree:
             slope, intercept = threshold
             left_centers = [c for c in centers if self.X[c, 1] <= slope * self.X[c, 0] + intercept]
             right_centers = [c for c in centers if self.X[c, 1] > slope * self.X[c, 0] + intercept]
-
         print("--------------------")
         print(f"Node centers: {centers}")
         print(f"Mean: {mean}")
@@ -97,7 +92,7 @@ class ThresholdTree:
         if len(right_centers) > 0:
             print(f"Right centers: {right_centers}")
         print("--------------------")
-        # Set the threshold and i values.
+        # Set the threshold and i .
         node.threshold = threshold
         node.i = i
         # If both the left/ right child have centers, create child nodes and set is_split to True.
@@ -105,7 +100,7 @@ class ThresholdTree:
             node.left_child = TreeNode(left_centers)
             node.right_child = TreeNode(right_centers)
             node.is_split = True
-        # If one of the child nodes is empty, recursively call divide_and_share.
+        # If one child nodes is empty, call divide_and_share.
         else:
             while True:
                 left_child, right_child = self.divide_and_share(i, node, theta, sigma, epsilon)
@@ -118,7 +113,7 @@ class ThresholdTree:
                     print(f"Added node with centers {node.centers} to processed nodes.")
                     print("--------------------")
                     break
-        # Return the child nodes.
+        # Return child nodes.
         return node.left_child, node.right_child
 
     def build(self):
@@ -179,16 +174,16 @@ def plot_clusters(node, X):
     if node is None:
         return
     else:
-        # Recursively call plot_clusters on left and right children of node
+        # Recursively call plot_clusters on left/ right children.
         plot_clusters(node.left_child, X)
         plot_clusters(node.right_child, X)
-        # If node is split and i=0, plot a vertical line at its threshold value
+        # If node is split and i=0, plot a vertical line.
         if node.is_split and node.i == 0:
             plt.axvline(x=node.threshold, color='k', linestyle='--', linewidth=1)
-        # If node is split and i=1, plot a horizontal line at its threshold value
+        # If node is split and i=1, plot a horizontal line.
         elif node.is_split and node.i == 1:
             plt.axhline(y=node.threshold, color='k', linestyle='--', linewidth=1)
-        # If node is split and i=2, plot a diagonal line using the slope and intercept
+        # If node is split and i=2, plot a diagonal line.
         elif node.is_split and node.i == 2:
             slope, intercept = node.threshold
             x_values = np.linspace(np.min(X[:, 0]), np.max(X[:, 0]), 100)
