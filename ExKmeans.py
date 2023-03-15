@@ -254,20 +254,36 @@ assignments = kmeans.predict(X)
 print("K-means centers =", centers)
 C = convert_centers_to_indices(X, centers)
 
-# Construct the threshold tree
-tree = ThresholdTree(X, C, delta=0.1)
-root = tree.build()
+# Create variables to store the best solution
+best_root = None
+best_cost = float('inf')
+best_new_assignments = None
+num_iterations = 1000
 
-#Assign using threshold tree
-new_assignments = assign_using_threshold_tree(X, root)
+# Run the algorithm multiple times
+for iteration in range(num_iterations):
+    tree = ThresholdTree(X, C, delta=0.1)
+    root = tree.build()
+    new_assignments = assign_using_threshold_tree(X, root)
+    cost2 = calculate_cost2(C, X, new_assignments)
+
+    # Check if the current cost is lower than the best cost
+    if cost2 < best_cost:
+        best_cost = cost2
+        best_root = root
+        best_new_assignments = new_assignments
+
+    print(f"Iteration {iteration + 1}: Cost = {cost2}")
+
+print(f"Lowest cost: {best_cost}")
+
 
 # Calculate costs and print info
 cost = calculate_cost(centers, X, assignments)
-cost2 = calculate_cost2(C, X, new_assignments)
 print("K-means Assignments =", assignments)
 print("New Assignments =", new_assignments)
 print("K-Means Cost =", cost)
-print("New Cost =", cost2)
+print("New Cost =", best_cost)
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
@@ -277,12 +293,12 @@ print("Time elapsed: ", end_time - start_time)
 #plt.figure(figsize=(10, 7))
 #plt.title("Threshold Tree Dendrogram")
 #dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
-visualize_ASCII_tree(root)
+visualize_ASCII_tree(best_root)
 
 # Plot the datapoints and threshold lines
 plt.scatter(X[:, 0], X[:, 1], c=y)
 plt.xlabel('Feature 1')
 plt.ylabel('Feature 2')
 plt.title('Iris Dataset')
-plot_clusters(root, X)
+plot_clusters(best_root, X)
 plt.show()
