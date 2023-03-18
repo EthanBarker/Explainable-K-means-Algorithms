@@ -258,7 +258,7 @@ C = convert_centers_to_indices(X, centers)
 best_root = None
 best_cost = float('inf')
 best_new_assignments = None
-num_iterations = 10000
+num_iterations = 1000
 
 # Run the algorithm multiple times
 for iteration in range(num_iterations):

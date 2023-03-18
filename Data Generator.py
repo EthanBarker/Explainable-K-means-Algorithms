@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def generate_custom_clusters(n_samples=1500, noise=0.1, random_state=None):
+def generate_custom_clusters(n_samples=1700, noise=0.3, random_state=None):
     np.random.seed(random_state)
     data = []
     labels = []
@@ -34,7 +34,7 @@ def generate_custom_clusters(n_samples=1500, noise=0.1, random_state=None):
     labels = np.array(labels)
     return data, labels
 
-X, y = generate_custom_clusters(n_samples=500, noise=0.2, random_state=42)
+X, y = generate_custom_clusters(n_samples=1700, noise=0.3, random_state=42)
 
 data = np.column_stack((X, y))
 df = pd.DataFrame(data, columns=["Feature_1", "Feature_2", "Label"])
