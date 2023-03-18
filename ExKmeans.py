@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, load_wine
 import scipy.cluster.hierarchy as shc
 
 class TreeNode:
@@ -241,14 +241,14 @@ def calculate_cost2(clusters, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# load the iris dataset
-iris = load_iris()
-X = iris.data[:, :2]
-y = iris.target
+# Load the wine dataset
+wine = load_wine()
+X = wine.data[:, :2]
+y = wine.target
 
-#Run k-means
+# Run k-means
 k = 3
-kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
+kmeans = KMeans(n_clusters=k, random_state=0, n_init=10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
 print("K-means centers =", centers)
@@ -299,6 +299,6 @@ visualize_ASCII_tree(best_root)
 plt.scatter(X[:, 0], X[:, 1], c=y)
 plt.xlabel('Feature 1')
 plt.ylabel('Feature 2')
-plt.title('Iris Dataset')
+plt.title('Wine Dataset')
 plot_clusters(best_root, X)
 plt.show()
