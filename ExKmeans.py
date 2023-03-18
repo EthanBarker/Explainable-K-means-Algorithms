@@ -241,10 +241,10 @@ def calculate_cost2(clusters, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# Load the wine dataset
-wine = load_wine()
-X = wine.data[:, :2]
-y = wine.target
+# Load the diagonal clusters dataset
+data = pd.read_csv('custom_clusters.csv')
+X = data.iloc[:, :2].values
+y = data.iloc[:, -1].values
 
 # Run k-means
 k = 3
@@ -258,7 +258,7 @@ C = convert_centers_to_indices(X, centers)
 best_root = None
 best_cost = float('inf')
 best_new_assignments = None
-num_iterations = 1000
+num_iterations = 10000
 
 # Run the algorithm multiple times
 for iteration in range(num_iterations):
@@ -299,6 +299,6 @@ visualize_ASCII_tree(best_root)
 plt.scatter(X[:, 0], X[:, 1], c=y)
 plt.xlabel('Feature 1')
 plt.ylabel('Feature 2')
-plt.title('Wine Dataset')
+plt.title('Synthetic Dataset')
 plot_clusters(best_root, X)
 plt.show()
