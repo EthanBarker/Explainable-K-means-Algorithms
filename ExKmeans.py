@@ -247,7 +247,7 @@ X = data.iloc[:, :2].values
 y = data.iloc[:, -1].values
 
 # Run k-means
-k = 3
+k = 4
 kmeans = KMeans(n_clusters=k, random_state=0, n_init=10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
