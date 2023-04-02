@@ -5,6 +5,10 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris, load_wine
 import scipy.cluster.hierarchy as shc
+import sys
+
+# Set recurision limit to 5000
+sys.setrecursionlimit(5000)
 
 class TreeNode:
     """
@@ -242,16 +246,13 @@ def calculate_cost2(clusters, X, assignments):
 start_time = time.time()
 
 # Load the iris dataset
-iris = load_iris()
-all_features = iris.data
+wine = load_wine()
+all_features = wine.data
 
 # Choose two features randomly
 features = np.random.choice(all_features.shape[1], 2, replace=False)
 X = all_features[:, features]
-y = iris.target
-
-# Print the features chosen
-print("Features Chosen =", features)
+y = wine.target
 
 #Run k-means
 k = 3
@@ -284,6 +285,8 @@ for iteration in range(num_iterations):
 
 print(f"Lowest cost: {best_cost}")
 
+# Print the features chosen
+print("Features Chosen =", features)
 
 # Calculate costs and print info
 cost = calculate_cost(centers, X, assignments)
