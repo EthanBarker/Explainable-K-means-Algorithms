@@ -241,14 +241,21 @@ def calculate_cost2(clusters, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# Load the diagonal clusters dataset
-data = pd.read_csv('custom_clusters.csv')
-X = data.iloc[:, :2].values
-y = data.iloc[:, -1].values
+# Load the iris dataset
+iris = load_iris()
+all_features = iris.data
 
-# Run k-means
-k = 4
-kmeans = KMeans(n_clusters=k, random_state=0, n_init=10).fit(X)
+# Choose two features randomly
+features = np.random.choice(all_features.shape[1], 2, replace=False)
+X = all_features[:, features]
+y = iris.target
+
+# Print the features chosen
+print("Features Chosen =", features)
+
+#Run k-means
+k = 3
+kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
 print("K-means centers =", centers)
@@ -299,6 +306,6 @@ visualize_ASCII_tree(best_root)
 plt.scatter(X[:, 0], X[:, 1], c=y)
 plt.xlabel('Feature 1')
 plt.ylabel('Feature 2')
-plt.title('Synthetic Dataset')
+plt.title('Iris Dataset')
 plot_clusters(best_root, X)
 plt.show()
