@@ -222,9 +222,9 @@ def assign_using_threshold_tree(X, root):
         new_assignments[i] = node.centers[0]
     return new_assignments
 
-def calculate_cost(clusters, X, assignments):
+def calculate_cost(centres, X, assignments):
     cost = 0
-    for i, cluster in enumerate(clusters):
+    for i, cluster in enumerate(centres):
         points_in_cluster = X[assignments == i]
         if len(points_in_cluster) > 0:
             center = np.mean(points_in_cluster, axis=0)
@@ -232,9 +232,9 @@ def calculate_cost(clusters, X, assignments):
             cost += cluster_cost
     return cost
 
-def calculate_cost2(clusters, X, assignments):
+def calculate_cost2(centres, X, assignments):
     cost = 0
-    for i, cluster in enumerate(clusters):
+    for i, cluster in enumerate(centres):
         points_in_cluster = X[assignments == cluster]
         if len(points_in_cluster) > 0:
             center = np.mean(points_in_cluster, axis=0)
@@ -245,14 +245,10 @@ def calculate_cost2(clusters, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# Load the iris dataset
-wine = load_wine()
-all_features = wine.data
-
-# Choose two features randomly
-features = np.random.choice(all_features.shape[1], 2, replace=False)
-X = all_features[:, features]
-y = wine.target
+# load the iris dataset
+iris = load_iris()
+X = iris.data[:, :2]
+y = iris.target
 
 #Run k-means
 k = 3
@@ -267,6 +263,7 @@ best_root = None
 best_cost = float('inf')
 best_new_assignments = None
 num_iterations = 1000
+sum_costs = 0
 
 # Run the algorithm multiple times
 for iteration in range(num_iterations):
@@ -282,11 +279,11 @@ for iteration in range(num_iterations):
         best_new_assignments = new_assignments
 
     print(f"Iteration {iteration + 1}: Cost = {cost2}")
+    sum_costs += cost2
+    average_cost = sum_costs / num_iterations
 
 print(f"Lowest cost: {best_cost}")
 
-# Print the features chosen
-print("Features Chosen =", features)
 
 # Calculate costs and print info
 cost = calculate_cost(centers, X, assignments)
@@ -294,6 +291,8 @@ print("K-means Assignments =", assignments)
 print("New Assignments =", new_assignments)
 print("K-Means Cost =", cost)
 print("New Cost =", best_cost)
+print("Ratio =", best_cost / cost )
+print(f"Average cost after {num_iterations} iterations: {average_cost}")
 
 # End timer and then display time taken to run in terminal
 end_time = time.time()
