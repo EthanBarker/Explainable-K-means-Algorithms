@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris, load_wine
-import scipy.cluster.hierarchy as shc
 import sys
 
 # Set recurision limit to 5000
@@ -245,13 +243,17 @@ def calculate_cost2(centres, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# load the iris dataset
-iris = load_iris()
-X = iris.data[:, :2]
-y = iris.target
+# Load the E.coli dataset
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/ecoli/ecoli.data"
+column_names = ["Sequence", "mcg", "gvh", "lip", "chg", "aac", "alm1", "alm2", "label"]
+ecoli = pd.read_csv(url, delimiter="\s+", header=None, names=column_names)
+
+# Extract the features and labels
+X = ecoli.iloc[:, 1:3].values
+y = ecoli["label"].values
 
 #Run k-means
-k = 3
+k = 5
 kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
@@ -298,10 +300,6 @@ print(f"Average cost after {num_iterations} iterations: {average_cost}")
 end_time = time.time()
 print("Time elapsed: ", end_time - start_time)
 
-# plot dendrogram
-#plt.figure(figsize=(10, 7))
-#plt.title("Threshold Tree Dendrogram")
-#dend = shc.dendrogram(shc.linkage(X[root.centers], method='ward'))
 visualize_ASCII_tree(best_root)
 
 # Plot the datapoints and threshold lines
