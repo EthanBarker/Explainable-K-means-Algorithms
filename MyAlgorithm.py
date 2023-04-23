@@ -5,6 +5,8 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 import sys
 
+from sklearn.datasets import load_iris
+
 # Set recurision limit to 5000
 sys.setrecursionlimit(5000)
 
@@ -243,17 +245,13 @@ def calculate_cost2(centres, X, assignments):
 # Start the timer
 start_time = time.time()
 
-# Load the E.coli dataset
-url = "https://archive.ics.uci.edu/ml/machine-learning-databases/ecoli/ecoli.data"
-column_names = ["Sequence", "mcg", "gvh", "lip", "chg", "aac", "alm1", "alm2", "label"]
-ecoli = pd.read_csv(url, delimiter="\s+", header=None, names=column_names)
-
-# Extract the features and labels
-X = ecoli.iloc[:, 1:3].values
-y = ecoli["label"].values
+# load the iris dataset
+iris = load_iris()
+X = iris.data[:, :2]
+y = iris.target
 
 #Run k-means
-k = 5
+k = 3
 kmeans = KMeans(n_clusters=k, random_state=0, n_init = 10).fit(X)
 centers = kmeans.cluster_centers_
 assignments = kmeans.predict(X)
