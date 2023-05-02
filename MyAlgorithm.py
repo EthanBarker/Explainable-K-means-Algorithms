@@ -194,50 +194,75 @@ def plot_clusters(node, X):
             y_values = slope * x_values + intercept
             plt.plot(x_values, y_values, color='k', linestyle='--', linewidth=1)
 
+# Function which converts centers to indices.
 def convert_centers_to_indices(X, centers):
+    # Create empty list for C
     C = []
     for c in centers:
+        # Work out the distance between X and the center
         dists = np.linalg.norm(X - c, axis=1)
+        # Find the index of the smallest distance
         index = np.argmin(dists)
+        # Add index to list C
         C.append(index)
+    # Convert C to numpy array
     C = np.array(C)
     return C
+# Function to assign points to clusters using the threshold tree
 def assign_using_threshold_tree(X, root):
+    # Make new array for assignments
     new_assignments = np.zeros(len(X))
     for i, x in enumerate(X):
+        # Start at the root
         node = root
+        # Go through tree until it reaches a leaf
         while node.left_child is not None:
+            # Code for diagonal lines i.e i = 2
             if node.i == 2:
+                # Work out the  y value of line at its x-coordinate
                 slope, intercept = node.threshold
                 y_value = slope * x[0] + intercept
+                # If x is below the line assign to left if not assign to right
                 if x[1] < y_value:
                     node = node.left_child
                 else:
                     node = node.right_child
+            # Code for vertical lines and horizontal lines
             else:
                 if x[node.i] < node.threshold:
                     node = node.left_child
                 else:
                     node = node.right_child
+        # Assign data points to clusters
         new_assignments[i] = node.centers[0]
     return new_assignments
 
+# First function to work out cost
 def calculate_cost(centres, X, assignments):
+    # Set cost to 0
     cost = 0
     for i, cluster in enumerate(centres):
+        # Find all points in a given cluster
         points_in_cluster = X[assignments == i]
         if len(points_in_cluster) > 0:
+            # Work out the mean
             center = np.mean(points_in_cluster, axis=0)
+            # Work out sum of squared distances between data points and centre
             cluster_cost = np.sum(np.linalg.norm(points_in_cluster - center, axis=1)**2)
             cost += cluster_cost
     return cost
 
+# Second function to work out cost
 def calculate_cost2(centres, X, assignments):
+    # Set cost to 0
     cost = 0
     for i, cluster in enumerate(centres):
+        # Find all points in a given cluster
         points_in_cluster = X[assignments == cluster]
         if len(points_in_cluster) > 0:
+            # Work out the mean
             center = np.mean(points_in_cluster, axis=0)
+            # Work out sum of squared distances between data points and centre
             cluster_cost = np.sum(np.linalg.norm(points_in_cluster - center, axis=1)**2)
             cost += cluster_cost
     return cost
